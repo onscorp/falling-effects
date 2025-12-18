@@ -1,6 +1,6 @@
 class SnowFall {
     constructor(options = {}) {
-        this.imageSrc = "./img/cSnow-icon.png";
+        this.imageSrc = "https://onscorp.github.io/falling-effects/img/cSnow-icon.png";
 
         const container = document.createElement("div");
         container.id = "ccSnowFlake";
