@@ -1,6 +1,6 @@
 class SnowFall {
     constructor(options = {}) {
-        this.imageSrc = "https://vkdnj4158.cafe24.com/tpc/lib/snowFall/cSnow-icon.png";
+        this.imageSrc = "./img/cSnow-icon.png";
 
         const container = document.createElement("div");
         container.id = "ccSnowFlake";
