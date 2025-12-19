@@ -11,8 +11,8 @@ class VerticalFalling {
         this.container = container;
 
         this.maxFlakes = options.maxFlakes || 50;
-        this.minSize = options.minSize || 12;
-        this.maxSize = options.maxSize || 26;
+        this.minSize = options.minSize || 20;
+        this.maxSize = options.maxSize || 40;
         this.minSpeed = options.minSpeed || 6;
         this.maxSpeed = options.maxSpeed || 14;
 
@@ -135,3 +135,4 @@ class VerticalFalling {
         if (this.container) this.container.innerHTML = "";
     }
 }
+
