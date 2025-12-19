@@ -42,7 +42,7 @@ window.addEventListener('load', function () {
       "snow/snow_4.png"
     ],
 
-    /* 설정 */
+    // 설정
     maxFlakes: 30,     // 화면에 동시에 존재하는 최대 개수
     minSize: 10,       // 최소 크기(px)
     maxSize: 32,       // 최대 크기(px)
