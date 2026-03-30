@@ -18,5 +18,19 @@
     pointer-events: none;
     will-change: transform, top, left, opacity;
     transform-style: preserve-3d;
-    backface-visibility: hidden;
+    transition: transform 1000ms linear;
+}
+
+@keyframes fallingVertical {
+    0% {
+        top: 0;
+        opacity: 1;
+    }
+    80% {
+        opacity: 1;
+    }
+    100% {
+        top: 100%;
+        opacity: 0.2;
+    }
 }
