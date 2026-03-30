@@ -36,8 +36,10 @@ window.addEventListener('load', function () {
   });
 });
 </script>
+```
 
 🌸 벚꽃 효과 예제
+```html
 <script>
 window.addEventListener('load', function () {
     new VerticalFalling({
@@ -66,6 +68,5 @@ window.addEventListener('load', function () {
     });
 });
 </script>
-
 ```
 
