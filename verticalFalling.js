@@ -49,6 +49,8 @@ if (!window.VerticalFalling) {
       this.container.style.position = "fixed";
       this.container.style.left = "0";
       this.container.style.top = `${this.topOffset}px`;
+      this.container.style.bottom = "0";
+      this.container.style.height = "auto";
       this.container.style.width = "100%";
       this.container.style.height = `calc(100vh - ${this.topOffset}px)`;
       this.container.style.overflow = "hidden";
