@@ -18,5 +18,5 @@
     pointer-events: none;
     will-change: transform, top, left, opacity;
     transform-style: preserve-3d;
-    backface-visibility: hidden;
+    transition: transform 1000ms linear;
 }
