@@ -12,12 +12,11 @@
 
 #FallingFlake .falling_item {
     position: absolute;
-    top: -10px;
+    top: 0;
     left: 0;
     user-select: none;
     pointer-events: none;
-    will-change: transform, opacity;
+    will-change: transform, top, left, opacity;
     transform-style: preserve-3d;
-    transition: transform 900ms linear;
     backface-visibility: hidden;
 }
