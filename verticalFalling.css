@@ -12,25 +12,12 @@
 
 #FallingFlake .falling_item {
     position: absolute;
-    top: 0;
+    top: -10px;
     left: 0;
     user-select: none;
     pointer-events: none;
-    will-change: transform, top, left, opacity;
+    will-change: transform, opacity;
     transform-style: preserve-3d;
-    transition: transform 1000ms linear;
-}
-
-@keyframes fallingVertical {
-    0% {
-        top: 0;
-        opacity: 1;
-    }
-    80% {
-        opacity: 1;
-    }
-    100% {
-        top: 100%;
-        opacity: 0.2;
-    }
+    transition: transform 900ms linear;
+    backface-visibility: hidden;
 }
