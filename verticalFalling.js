@@ -22,25 +22,35 @@ class VerticalFalling {
     container.style.overflow = "hidden";
     container.style.pointerEvents = "none";
     container.style.zIndex = options.zIndex ?? 9999;
+    container.style.perspective = "1500px";
 
     this._onResize = () => {
       this.topOffset = this.getTopOffset();
       container.style.top = `${this.topOffset}px`;
       container.style.height = `calc(100vh - ${this.topOffset}px)`;
+      this.wrapW = this.container.clientWidth || window.innerWidth;
+      this.wrapH = this.container.clientHeight || window.innerHeight;
     };
     window.addEventListener("resize", this._onResize);
 
-    this.maxFlakes = options.maxFlakes || 70;
-    this.minSize = options.minSize || 20;
-    this.maxSize = options.maxSize || 40;
-    this.minSpeed = options.minSpeed || 6;
-    this.maxSpeed = options.maxSpeed || 14;
+    // 벚꽃 느낌 기본값
+    this.maxFlakes = options.maxFlakes ?? 60;
+    this.minSize = options.minSize ?? 10;
+    this.maxSize = options.maxSize ?? 18;
+    this.minSpeed = options.minSpeed ?? 5;
+    this.maxSpeed = options.maxSpeed ?? 9;
+    this.spawnMin = options.spawnMin ?? 260;
+    this.spawnMax = options.spawnMax ?? 520;
     this.fallbackImage = options.fallbackImage || null;
 
     this.active = true;
+    this.items = [];
+    this.spawnTimer = null;
 
-    this.injectKeyframes();
-    this.loop();
+    this.wrapW = this.container.clientWidth || window.innerWidth;
+    this.wrapH = this.container.clientHeight || window.innerHeight;
+
+    this.start();
   }
 
   random(min, max) {
@@ -65,109 +75,151 @@ class VerticalFalling {
     );
   }
 
+  getFallbackSrc() {
+    if (!this.fallbackImage) return null;
+
+    if (/^(https?:)?\/\//.test(this.fallbackImage) || /^data:/.test(this.fallbackImage)) {
+      return this.fallbackImage;
+    }
+
+    return (
+      this.assetsBaseUrl.replace(/\/$/, "") +
+      "/" +
+      String(this.fallbackImage).replace(/^\//, "")
+    );
+  }
+
+  getRandomSwayTransform() {
+    const rotateX = 360;
+    const rotateY = this.random(-30, 30);
+    const rotateZ = this.random(-30, 90);
+    const translateX = this.random(-5, 5);
+    const translateY = this.random(-10, 0);
+    const translateZ = this.random(0, 15);
+
+    return `rotateX(${rotateX}deg) rotateY(${rotateY}deg) rotateZ(${rotateZ}deg) translateX(${translateX}px) translateY(${translateY}px) translateZ(${translateZ}px)`;
+  }
+
+  applySwayAnim(item) {
+    if (!this.active || !item.el.isConnected) return;
+
+    item.el.style.transform = this.getRandomSwayTransform();
+
+    item.swayTimer = setTimeout(() => {
+      this.applySwayAnim(item);
+    }, 1000);
+  }
+
   createFlake() {
     if (!this.active) return;
+    if (this.items.length >= this.maxFlakes) return;
 
     const flake = document.createElement("img");
     flake.classList.add("falling_item");
     flake.src = this.pickImageSrc();
 
-    if (this.fallbackImage) {
-      const fallbackSrc =
-        /^(https?:)?\/\//.test(this.fallbackImage) || /^data:/.test(this.fallbackImage)
-          ? this.fallbackImage
-          : this.assetsBaseUrl.replace(/\/$/, "") +
-            "/" +
-            String(this.fallbackImage).replace(/^\//, "");
-
+    const fallbackSrc = this.getFallbackSrc();
+    if (fallbackSrc) {
       flake.addEventListener("error", () => {
         if (flake.src !== fallbackSrc) flake.src = fallbackSrc;
       });
     }
 
-    const wrapW = this.container.clientWidth || window.innerWidth;
-    const wrapH = this.container.clientHeight || window.innerHeight;
-
-    const size = this.random(this.minSize, this.maxSize);
-    const xStart = this.random(0, wrapW);
-    const swing = this.random(20, 60) * (25 / size);
-    const yEnd = wrapH + 200;
-    const duration = this.random(this.minSpeed, this.maxSpeed);
-    const rotate = this.random(-180, 180);
+    const size = Math.floor(this.random(this.minSize, this.maxSize + 1));
+    const startPosLeft = Math.random() * this.wrapW;
+    const fallTime = this.random(this.minSpeed, this.maxSpeed);
+    const horizontalOffset = this.random(-0.35, 0.35);
 
     flake.style.position = "absolute";
-    flake.style.left = `${xStart}px`;
-    flake.style.top = "-40px";
+    flake.style.left = `${startPosLeft}px`;
+    flake.style.top = `${-size - this.random(10, 60)}px`;
     flake.style.width = `${size}px`;
     flake.style.height = `${size}px`;
-    flake.style.opacity = this.random(0.5, 1);
+    flake.style.opacity = this.random(0.55, 1);
     flake.style.pointerEvents = "none";
     flake.style.userSelect = "none";
-    flake.style.willChange = "transform";
-
-    flake.style.setProperty("--swing", `${swing}px`);
-    flake.style.setProperty("--yEnd", `${yEnd}px`);
-    flake.style.setProperty("--rotate", `${rotate}deg`);
-    flake.style.setProperty("--duration", `${duration}s`);
-
-    flake.style.animation = "fallMove var(--duration) linear forwards";
+    flake.style.willChange = "transform, top, left, opacity";
+    flake.style.transformStyle = "preserve-3d";
+    flake.style.transition = "transform 1000ms linear";
 
     this.container.appendChild(flake);
 
-    flake.addEventListener("animationend", () => {
-      flake.remove();
-      if (this.active) this.createFlake();
-    });
-  }
+    const item = {
+      el: flake,
+      horizontalOffset,
+      fallTime,
+      swayTimer: null,
+      moveRaf: null,
+      startTime: performance.now()
+    };
 
-  loop() {
-    let count = 0;
+    const startTop = parseFloat(flake.style.top) || 0;
+    const endTop = this.wrapH + size + 40;
 
-    const interval = setInterval(() => {
-      if (!this.active) {
-        clearInterval(interval);
+    const updatePos = (now) => {
+      if (!this.active || !flake.isConnected) return;
+
+      const elapsed = (now - item.startTime) / 1000;
+      const progress = Math.min(elapsed / item.fallTime, 1);
+
+      // 아래로 낙하
+      const currentTop = startTop + (endTop - startTop) * progress;
+      flake.style.top = `${currentTop}px`;
+
+      // 좌우로 아주 조금 흘러감
+      const currentLeft = parseFloat(flake.style.left) || startPosLeft;
+      flake.style.left = `${currentLeft + item.horizontalOffset}px`;
+
+      // 종료
+      if (progress >= 1) {
+        if (item.moveRaf) cancelAnimationFrame(item.moveRaf);
+        if (item.swayTimer) clearTimeout(item.swayTimer);
+
+        this.items = this.items.filter((v) => v !== item);
+        flake.remove();
+
+        if (this.active) this.createFlake();
         return;
       }
 
-      this.createFlake();
-      count++;
+      item.moveRaf = requestAnimationFrame(updatePos);
+    };
 
-      if (count >= this.maxFlakes) {
-        clearInterval(interval);
-      }
-    }, 400 + this.random(0, 400));
+    this.items.push(item);
+
+    item.moveRaf = requestAnimationFrame(updatePos);
+    this.applySwayAnim(item);
   }
 
-  injectKeyframes() {
-    const style = document.createElement("style");
+  loop() {
+    if (!this.active) return;
 
-    style.innerHTML = `
-      @keyframes fallMove {
-        0% {
-          transform: translate(0, 0) rotate(0deg);
-        }
-        50% {
-          transform: translate(
-            calc(var(--swing) * 0.8),
-            calc(var(--yEnd) * 0.5)
-          ) rotate(calc(var(--rotate) / 2));
-        }
-        100% {
-          transform: translate(
-            var(--swing),
-            var(--yEnd)
-          ) rotate(var(--rotate));
-        }
-      }
-    `;
+    this.createFlake();
 
-    document.head.appendChild(style);
+    const delay = this.random(this.spawnMin, this.spawnMax);
+    this.spawnTimer = setTimeout(() => {
+      this.loop();
+    }, delay);
+  }
+
+  start() {
+    this.loop();
   }
 
   stop() {
     this.active = false;
-    if (this.container) this.container.innerHTML = "";
+
+    if (this.spawnTimer) clearTimeout(this.spawnTimer);
     if (this._onResize) window.removeEventListener("resize", this._onResize);
+
+    this.items.forEach((item) => {
+      if (item.moveRaf) cancelAnimationFrame(item.moveRaf);
+      if (item.swayTimer) clearTimeout(item.swayTimer);
+      if (item.el && item.el.isConnected) item.el.remove();
+    });
+
+    this.items = [];
+
+    if (this.container) this.container.innerHTML = "";
   }
 }
-
